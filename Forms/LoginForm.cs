@@ -1,8 +1,5 @@
-﻿using discos.Data;
-using discos.Forms;
-using MySqlConnector;
+﻿using discos.Forms;
 using System;
-using System.Data;
 using System.Windows.Forms;
 
 namespace discos2

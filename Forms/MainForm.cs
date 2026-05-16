@@ -1,13 +1,7 @@
 ﻿using discos.Data;
 using discos.Models;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace discos.Forms
@@ -83,7 +77,7 @@ namespace discos.Forms
                 DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
                 Artista artistaSelecionado = (Artista)row.DataBoundItem;
 
-                switch(columnName)
+                switch (columnName)
                 {
                     case "ViewColumn":
                         VerArtistaForm artistaForm = new VerArtistaForm(artistaSelecionado);
