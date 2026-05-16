@@ -1,210 +1,267 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Host: 127.0.0.1
--- Tempo de geração: 10-Maio-2026 às 18:13
--- Versão do servidor: 10.4.32-MariaDB
--- versão do PHP: 8.2.12
+CREATE DATABASE IF NOT EXISTS discos;
+USE discos;
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
+-- 1. Create Tables
+CREATE TABLE login (
+    id VARCHAR(5) PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    passwrd VARCHAR(100) NOT NULL
+);
 
+CREATE TABLE nacionalidade (
+    id VARCHAR(5) PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE
+);
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+CREATE TABLE genero (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE
+);
 
---
--- Banco de dados: `discos`
---
+CREATE TABLE artista (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(200) NOT NULL,
+    nacionalidade_id VARCHAR(5),
+    dataNascimento DATE NULL,
+    biografia TEXT,
+    imagem LONGBLOB NULL,
+    FOREIGN KEY (nacionalidade_id) REFERENCES nacionalidade(id)
+);
 
--- --------------------------------------------------------
+CREATE TABLE disco (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(200) NOT NULL,
+    ano INT NOT NULL,
+    letra TEXT,
+    genero_id INT NOT NULL,
+    imagem LONGBLOB NULL,
+    FOREIGN KEY (genero_id) REFERENCES genero(id)
+);
 
---
--- Estrutura da tabela `artista`
---
+CREATE TABLE faixa (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(200) NOT NULL,
+    letra TEXT,
+    duracao INT NOT NULL, -- Duration in seconds
+    disco_id INT NOT NULL, -- One-to-Many relationship
+    FOREIGN KEY (disco_id) REFERENCES disco(id) ON DELETE CASCADE
+);
 
-CREATE TABLE `artista` (
-  `id` int(11) NOT NULL,
-  `nome` varchar(255) NOT NULL,
-  `nacionalidade` varchar(255) NOT NULL,
-  `data_de_nascimento` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE artista_disco (
+    artista_id INT NOT NULL,
+    disco_id INT NOT NULL,
+    PRIMARY KEY (artista_id, disco_id),
+    FOREIGN KEY (artista_id) REFERENCES artista(id) ON DELETE CASCADE,
+    FOREIGN KEY (disco_id) REFERENCES disco(id) ON DELETE CASCADE
+);
 
--- --------------------------------------------------------
+-- 2. Insert Default Values
 
---
--- Estrutura da tabela `artista_disco`
---
+-- Nacionalidades (Países / Nacionalidades em português de Portugal)
+INSERT INTO nacionalidade (id, nome) VALUES 
+('AF', 'Afegão'),
+('AL', 'Albanês'),
+('DE', 'Alemão'),
+('AD', 'Andorrano'),
+('AO', 'Angolano'),
+('AG', 'Antiguano'),
+('DZ', 'Argelino'),
+('AR', 'Argentino'),
+('AM', 'Armênio'),
+('AU', 'Australiano'),
+('AT', 'Austríaco'),
+('AZ', 'Azerbaijano'),
+('BS', 'Bahamense'),
+('BD', 'Bangladês'),
+('BB', 'Barbadiense'),
+('BH', 'Barenita'),
+('BE', 'Belga'),
+('BZ', 'Belizenho'),
+('BJ', 'Beninense'),
+('BY', 'Bielorrusso'),
+('BO', 'Boliviano'),
+('BA', 'Bósnio'),
+('BW', 'Botsuano'),
+('BR', 'Brasileiro'),
+('GB', 'Britânico'),
+('BN', 'Bruneano'),
+('BG', 'Búlgaro'),
+('BI', 'Burundês'),
+('BT', 'Butanês'),
+('CV', 'Cabo-verdiano'),
+('CM', 'Camarões'),
+('KH', 'Cambojano'),
+('CA', 'Canadense'),
+('QA', 'Catarí'),
+('KZ', 'Cazaque'),
+('TD', 'Chadiano'),
+('CL', 'Chileno'),
+('CN', 'Chinês'),
+('CY', 'Cipriota'),
+('CO', 'Colombiano'),
+('KM', 'Comorense'),
+('CG', 'Congolês'),
+('CI', 'Costa-marfinense'),
+('CR', 'Costa-riquenho'),
+('HR', 'Croata'),
+('CU', 'Cubano'),
+('DK', 'Dinamarquês'),
+('DJ', 'Djibutiano'),
+('DM', 'Dominiquense'),
+('EG', 'Egípcio'),
+('AE', 'Emiratense'),
+('EC', 'Equatoriano'),
+('ER', 'Eritreu'),
+('SK', 'Eslovaco'),
+('SI', 'Esloveno'),
+('ES', 'Espanhol'),
+('US', 'Estadunidense'),
+('EE', 'Estoniano'),
+('ET', 'Etíope'),
+('FJ', 'Fijiano'),
+('PH', 'Filipino'),
+('FI', 'Finlandês'),
+('FR', 'Francês'),
+('GA', 'Gabonês'),
+('GM', 'Gambiano'),
+('GH', 'Ganês'),
+('GE', 'Georgiano'),
+('GD', 'Granadino'),
+('GR', 'Grego'),
+('GT', 'Guatemalteco'),
+('GY', 'Guianense'),
+('GN', 'Guineense'),
+('HT', 'Haitiano'),
+('NL', 'Holandês'),
+('HN', 'Hondurenho'),
+('HU', 'Húngaro'),
+('YE', 'Iemenita'),
+('IN', 'Indiano'),
+('ID', 'Indonésio'),
+('IR', 'Iraniano'),
+('IQ', 'Iraquiano'),
+('IE', 'Irlandês'),
+('IS', 'Islandês'),
+('IL', 'Israelense'),
+('IT', 'Italiano'),
+('JM', 'Jamaicano'),
+('JP', 'Japonês'),
+('JO', 'Jordaniano'),
+('KI', 'Kiribatiano'),
+('KW', 'Kuwaitiano'),
+('LA', 'Laosiano'),
+('LS', 'Lesotiano'),
+('LV', 'Letão'),
+('LB', 'Libanês'),
+('LR', 'Liberiano'),
+('LY', 'Líbio'),
+('LT', 'Lituano'),
+('LU', 'Luxemburguês'),
+('MK', 'Macedônio'),
+('MG', 'Madagascarense'),
+('MY', 'Malásio'),
+('MW', 'Malauiano'),
+('MV', 'Maldivo'),
+('ML', 'Maliano'),
+('MT', 'Maltês'),
+('MA', 'Marroquino'),
+('MU', 'Mauriciano'),
+('MR', 'Mauritano'),
+('MX', 'Mexicano'),
+('MM', 'Mianmarense'),
+('FM', 'Micronésio'),
+('MZ', 'Moçambicano'),
+('MD', 'Moldavo'),
+('MC', 'Monegasco'),
+('MN', 'Mongol'),
+('ME', 'Montenegrino'),
+('NA', 'Namibiano'),
+('NR', 'Nauruano'),
+('NZ', 'Neozelandês'),
+('NP', 'Nepalês'),
+('NI', 'Nicaraguense'),
+('NG', 'Nigeriano'),
+('NE', 'Nigerino'),
+('KP', 'Norte-coreano'),
+('NO', 'Norueguês'),
+('OM', 'Omanense'),
+('PW', 'Palauano'),
+('PA', 'Panamenho'),
+('PK', 'Paquistanês'),
+('PY', 'Paraguaio'),
+('PE', 'Peruano'),
+('PL', 'Polonês'),
+('PT', 'Português'),
+('KE', 'Queniano'),
+('KG', 'Quirguiz'),
+('RO', 'Romeno'),
+('RW', 'Ruandês'),
+('RU', 'Russo'),
+('SV', 'Salvadorenho'),
+('WS', 'Samoano'),
+('LC', 'Santa-lucense'),
+('ST', 'São-tomense'),
+('SA', 'Saudita'),
+('SN', 'Senegalês'),
+('RS', 'Sérvio'),
+('SC', 'Seychellense'),
+('SL', 'Sierraleonês'),
+('SG', 'Singapurense'),
+('SY', 'Sírio'),
+('SO', 'Somali'),
+('LK', 'Sri-lankês'),
+('SZ', 'Suazi'),
+('SD', 'Sudanês'),
+('SE', 'Sueco'),
+('CH', 'Suíço'),
+('KR', 'Sul-coreano'),
+('SR', 'Surinamês'),
+('TH', 'Tailandês'),
+('TW', 'Taiwanês'),
+('TZ', 'Tanzaniano'),
+('CZ', 'Tcheco'),
+('TL', 'Timorense'),
+('TG', 'Togolês'),
+('TO', 'Tonganês'),
+('TT', 'Trinitário-tobagense'),
+('TN', 'Tunisiano'),
+('TR', 'Turco'),
+('TM', 'Turcomeno'),
+('TV', 'Tuvaluano'),
+('UA', 'Ucraniano'),
+('UG', 'Ugandense'),
+('UY', 'Uruguaio'),
+('UZ', 'Uzbeque'),
+('VU', 'Vanuatuense'),
+('VE', 'Venezuelano'),
+('VN', 'Vietnamita'),
+('ZM', 'Zambiano'),
+('ZW', 'Zimbabuense');
 
-CREATE TABLE `artista_disco` (
-  `id_artista` int(11) NOT NULL,
-  `id_disco` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `disco`
---
-
-CREATE TABLE `disco` (
-  `id` int(11) NOT NULL,
-  `nome` varchar(255) NOT NULL,
-  `ano` int(4) NOT NULL,
-  `id_genero` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `faixa`
---
-
-CREATE TABLE `faixa` (
-  `id` int(11) NOT NULL,
-  `id_disco` int(11) NOT NULL,
-  `descricao` varchar(2048) DEFAULT NULL,
-  `duracao` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `genero`
---
-
-CREATE TABLE `genero` (
-  `id` int(11) NOT NULL,
-  `nome` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Extraindo dados da tabela `genero`
---
-
-INSERT INTO `genero` (`id`, `nome`) VALUES
-(1, 'Funk'),
-(2, 'Rock and roll');
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `login`
---
-
-CREATE TABLE `login` (
-  `id` int(64) NOT NULL,
-  `username` varchar(50) NOT NULL,
-  `passwd` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Extraindo dados da tabela `login`
---
-
-INSERT INTO `login` (`id`, `username`, `passwd`) VALUES
-(0, 'admin', 'admin123');
-
---
--- Índices para tabelas despejadas
---
-
---
--- Índices para tabela `artista`
---
-ALTER TABLE `artista`
-  ADD PRIMARY KEY (`id`);
-
---
--- Índices para tabela `artista_disco`
---
-ALTER TABLE `artista_disco`
-  ADD PRIMARY KEY (`id_artista`,`id_disco`),
-  ADD KEY `fk_ad_disco` (`id_disco`);
-
---
--- Índices para tabela `disco`
---
-ALTER TABLE `disco`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_disco_genero` (`id_genero`);
-
---
--- Índices para tabela `faixa`
---
-ALTER TABLE `faixa`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_faixa_disco` (`id_disco`);
-
---
--- Índices para tabela `genero`
---
-ALTER TABLE `genero`
-  ADD PRIMARY KEY (`id`);
-
---
--- Índices para tabela `login`
---
-ALTER TABLE `login`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`);
-
---
--- AUTO_INCREMENT de tabelas despejadas
---
-
---
--- AUTO_INCREMENT de tabela `artista`
---
-ALTER TABLE `artista`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT de tabela `disco`
---
-ALTER TABLE `disco`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `faixa`
---
-ALTER TABLE `faixa`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `genero`
---
-ALTER TABLE `genero`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- Restrições para despejos de tabelas
---
-
---
--- Limitadores para a tabela `artista_disco`
---
-ALTER TABLE `artista_disco`
-  ADD CONSTRAINT `fk_ad_artista` FOREIGN KEY (`id_artista`) REFERENCES `artista` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_ad_disco` FOREIGN KEY (`id_disco`) REFERENCES `disco` (`id`) ON DELETE CASCADE;
-
---
--- Limitadores para a tabela `disco`
---
-ALTER TABLE `disco`
-  ADD CONSTRAINT `fk_disco_genero` FOREIGN KEY (`id_genero`) REFERENCES `genero` (`id`) ON DELETE CASCADE;
-
---
--- Limitadores para a tabela `faixa`
---
-ALTER TABLE `faixa`
-  ADD CONSTRAINT `fk_faixa_disco` FOREIGN KEY (`id_disco`) REFERENCES `disco` (`id`) ON DELETE CASCADE;
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+-- Géneros Musicais (Incluindo estilos tradicionais e populares em Portugal)
+INSERT INTO genero (nome) VALUES 
+('Funk'),
+('Rock and roll'),
+('Rock'),
+('Pop'),
+('Jazz'),
+('Classical'),
+('Hip Hop'),
+('Electronic'),
+('Country'),
+('Blues'),
+('Reggae'),
+('Folk'),
+('Heavy Metal'),
+('Punk Rock'),
+('Soul'),
+('R&B'),
+('Funk'),
+('Disco'),
+('Techno'),
+('House'),
+('Ambient'),
+('Latin'),
+('Indie'),
+('Gospel'),
+('Ska');

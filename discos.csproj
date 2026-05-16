@@ -187,6 +187,7 @@
     <Compile Include="Models\Faixa.cs" />
     <Compile Include="Models\Genero.cs" />
     <Compile Include="Models\Login.cs" />
+    <Compile Include="Models\Nacionalidade.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Forms\GerirArtistaForm.resx">

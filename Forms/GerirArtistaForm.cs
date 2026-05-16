@@ -23,6 +23,8 @@ namespace discos.Forms
         {
             InitializeComponent();
 
+            nacionalidadeComboBox.Items.Add(Database.ListarNacionalidades());
+
             if (artista != null)
             {
                 editar = true;
@@ -39,9 +41,12 @@ namespace discos.Forms
         {
             Database.InserirArtista
                 (
-                nomeTextBox.Text,
-                nacionalidadeTextBox.Text,
-                dataNascimentoDateTimePicker.Value
+                new Artista
+                {
+                    Nome = nomeTextBox.Text,
+                    DataNascimento = dataNascimentoDateTimePicker.Value,
+                    Nacionalidade = (Nacionalidade)nacionalidadeComboBox.SelectedItem
+                }
             );
 
             this.DialogResult = DialogResult.OK;

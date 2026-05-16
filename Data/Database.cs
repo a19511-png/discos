@@ -6,115 +6,153 @@ using System.Configuration;
 
 namespace discos.Data
 {
-    public class Database
+    public static class Database
     {
-        private static string connectionString = ConfigurationManager.ConnectionStrings["MySqlDatabase"].ConnectionString;
+        private static string _connectionString = ConfigurationManager.ConnectionStrings["MySqlDatabase"].ConnectionString;
 
         public static List<Login> ListarLogins()
         {
-            var logins = new List<Login>();
-
-            var query = "SELECT id, username, passwd FROM login";
-
-            using (var conn = new MySqlConnection(connectionString))
+            var lista = new List<Login>();
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                string sql = "SELECT id, username, passwrd FROM login";
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        var login = new Login(
-                            reader.GetInt32(reader.GetOrdinal("Id")),
-                            reader.GetString(reader.GetOrdinal("username")),
-                            reader.GetString(reader.GetOrdinal("passwd"))
-                        );
-
-                        logins.Add(login);
+                        lista.Add(new Login
+                        {
+                            Id = Convert.ToInt32(reader["id"]),
+                            Username = reader["username"].ToString(),
+                            Password = reader["passwrd"].ToString()
+                        });
                     }
                 }
             }
-
-            return logins;
+            return lista;
         }
 
         public static List<Genero> ListarGeneros()
         {
-            var generos = new List<Genero>();
-
-            var query = "SELECT id, nome FROM generos";
-
-            using (var conn = new MySqlConnection(connectionString))
+            var lista = new List<Genero>();
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                string sql = "SELECT id, nome FROM genero";
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        var genero = new Genero(
-                            reader.GetInt32(reader.GetOrdinal("id")),
-                            reader.GetString(reader.GetOrdinal("nome"))
-                        );
-
-                        generos.Add(genero);
+                        lista.Add(new Genero
+                        {
+                            Id = Convert.ToInt32(reader["id"]),
+                            Nome = reader["nome"].ToString()
+                        });
                     }
                 }
             }
-
-            return generos;
+            return lista;
         }
 
+        public static List<Nacionalidade> ListarNacionalidades()
+        {
+            var lista = new List<Nacionalidade>();
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
+            {
+                conn.Open();
+                string sql = "SELECT id, nome FROM nacionalidade";
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new Nacionalidade
+                        {
+                            Id = reader["id"].ToString(),
+                            Nome = reader["nome"].ToString()
+                        });
+                    }
+                }
+            }
+            return lista;
+        }
 
-        // -------------------------------------
-        // ARTISTAS
-        // -------------------------------------
+        public static void InserirArtista(Artista artista)
+        {
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
+            {
+                conn.Open();
+                string sql = @"INSERT INTO artista (nome, nacionalidade_id, dataNascimento, biografia, imagem) 
+                           VALUES (@nome, @nacionalidade_id, @dataNascimento, @biografia, @imagem)";
+
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@nome", artista.Nome);
+                    cmd.Parameters.AddWithValue("@nacionalidade_id", artista.Nacionalidade?.Id ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@dataNascimento", artista.DataNascimento ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@biografia", artista.Biografia ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@imagem", artista.Imagem ?? (object)DBNull.Value);
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
 
         public static List<Artista> ListarArtistas()
         {
-            var artistas = new List<Artista>();
-
-            var query = "SELECT id, nome, nacionalidade, data_de_nascimento FROM artista";
-
-            using (var conn = new MySqlConnection(connectionString))
+            var lista = new List<Artista>();
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                string sql = "SELECT id, nome, nacionalidade_id, dataNascimento, biografia, imagem FROM artista";
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        Artista artista = new Artista(
-                            reader.GetInt32("id"),
-                            reader.GetString("nome"),
-                            reader.GetString("nacionalidade"),
-                            reader.GetDateTime("data_de_nascimento")
-                        );
+                        lista.Add(new Artista
+                        {
+                            Id = Convert.ToInt32(reader["id"]),
+                            Nome = reader["nome"].ToString(),
+                            DataNascimento = reader["dataNascimento"] != DBNull.Value ? Convert.ToDateTime(reader["dataNascimento"]) : (DateTime?)null,
+                            Biografia = reader["biografia"] != DBNull.Value ? reader["biografia"].ToString() : string.Empty,
+                            Imagem = reader["imagem"] != DBNull.Value ? (byte[])reader["imagem"] : null,
 
-                        artistas.Add(artista);
+                            Nacionalidade = reader["nacionalidade_id"] != DBNull.Value
+                                            ? new Nacionalidade { Id = reader["nacionalidade_id"].ToString() }
+                                            : null
+                        });
                     }
                 }
             }
-
-            return artistas;
+            return lista;
         }
 
-        public static void InserirArtista(string nome, string nascionalidade, DateTime dataNascimento)
+        public static void AtualizarArtista(Artista artista)
         {
-            var query = "INSERT INTO artista (nome, nacionalidade, data_de_nascimento) VALUES (@nome,@nascionalidade,@dataNascimento)";
-
-            using (var conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
+                string sql = @"UPDATE artista SET 
+                            nome = @nome, 
+                            nacionalidade_id = @nacionalidade_id, 
+                            dataNascimento = @dataNascimento, 
+                            biografia = @biografia, 
+                            imagem = @imagem 
+                           WHERE id = @id";
 
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@nome", nome);
-                    cmd.Parameters.AddWithValue("@nascionalidade", nascionalidade);
-                    cmd.Parameters.AddWithValue("@dataNascimento", dataNascimento.Date);
+                    cmd.Parameters.AddWithValue("@id", artista.Id);
+                    cmd.Parameters.AddWithValue("@nome", artista.Nome);
+                    cmd.Parameters.AddWithValue("@nacionalidade_id", artista.Nacionalidade?.Id ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@dataNascimento", artista.DataNascimento ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@biografia", artista.Biografia ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@imagem", artista.Imagem ?? (object)DBNull.Value);
+
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -122,13 +160,11 @@ namespace discos.Data
 
         public static void ApagarArtista(int id)
         {
-            var query = "DELETE FROM artista WHERE Id=@id";
-
-            using (var conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                string sql = "DELETE FROM artista WHERE id = @id";
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
                     cmd.ExecuteNonQuery();
@@ -136,143 +172,105 @@ namespace discos.Data
             }
         }
 
-
-        // -------------------------------------
-        // DISCOS
-        // -------------------------------------
-
-        public static List<Disco> ListarDiscos(int id_artista)
+        /// <summary>
+        /// Insere o Disco, suas Faixas e vincula os Artistas tudo num único processo seguro.
+        /// </summary>
+        public static void InserirDiscoComFaixasEArtistas(Disco disco, List<Artista> artistasEnvolvidos)
         {
-            var discos = new List<Disco>();
-
-            var query = "SELECT id, nome, ano, id_genero FROM disco WHERE id=@id_artista";
-
-            using (var conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                using (MySqlTransaction transaction = conn.BeginTransaction())
                 {
-                    cmd.Parameters.AddWithValue("@id_artista", id_artista);
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    try
                     {
-                        while (reader.Read())
-                        {
-                            Disco disco = new Disco(
-                                reader.GetInt32("id"),
-                                reader.GetString("nome"),
-                                reader.GetInt32("ano"),
-                                reader.GetInt32("id_genero")
-                            );
+                        // 1. INSERIR DISCO
+                        string sqlDisco = @"INSERT INTO disco (nome, ano, letra, genero_id, imagem) 
+                                        VALUES (@nome, @ano, @letra, @genero_id, @imagem);
+                                        SELECT LAST_INSERT_ID();";
 
-                            discos.Add(disco);
+                        using (MySqlCommand cmd = new MySqlCommand(sqlDisco, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@nome", disco.Nome);
+                            cmd.Parameters.AddWithValue("@ano", disco.Ano);
+                            cmd.Parameters.AddWithValue("@letra", disco.Letra);
+                            cmd.Parameters.AddWithValue("@genero_id", disco.Genero.Id);
+                            cmd.Parameters.AddWithValue("@imagem", disco.Imagem ?? (object)DBNull.Value);
+
+                            disco.Id = Convert.ToInt32(cmd.ExecuteScalar());
                         }
+
+                        // 2. INSERIR FAIXAS (One-to-Many)
+                        string sqlFaixa = "INSERT INTO faixa (nome, letra, duracao, disco_id) VALUES (@nome, @letra, @duracao, @disco_id)";
+                        foreach (var faixa in disco.Faixas)
+                        {
+                            using (MySqlCommand cmd = new MySqlCommand(sqlFaixa, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@nome", faixa.Nome);
+                                cmd.Parameters.AddWithValue("@letra", faixa.Letra);
+                                cmd.Parameters.AddWithValue("@duracao", faixa.Duracao);
+                                cmd.Parameters.AddWithValue("@disco_id", disco.Id);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // 3. VINCULAR ARTISTAS AO DISCO (Many-to-Many)
+                        string sqlArtistaDisco = "INSERT INTO artista_disco (artista_id, disco_id) VALUES (@artista_id, @disco_id)";
+                        foreach (var artista in artistasEnvolvidos)
+                        {
+                            using (MySqlCommand cmd = new MySqlCommand(sqlArtistaDisco, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@artista_id", artista.Id);
+                                cmd.Parameters.AddWithValue("@disco_id", disco.Id);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw new Exception("Erro ao salvar o disco. Tudo foi revertido.", ex);
                     }
                 }
             }
-
-            return discos;
         }
 
-        public static void InserirDisco(int nome, string ano, int id_genero)
+        public static List<Disco> ListarDiscos()
         {
-            var query = "INSERT INTO disco (nome, ano, id_genero) VALUES (@nome,@ano,@id_genero)";
-
-            using (var conn = new MySqlConnection(connectionString))
+            var lista = new List<Disco>();
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                string sql = "SELECT id, nome, ano, letra, genero_id, imagem FROM disco";
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
-                    cmd.Parameters.AddWithValue("@nome", nome);
-                    cmd.Parameters.AddWithValue("@ano", ano);
-                    cmd.Parameters.AddWithValue("@id_genero", id_genero);
-                    cmd.ExecuteNonQuery();
+                    while (reader.Read())
+                    {
+                        lista.Add(new Disco
+                        {
+                            Id = Convert.ToInt32(reader["id"]),
+                            Nome = reader["nome"].ToString(),
+                            Ano = Convert.ToInt32(reader["ano"]),
+                            Letra = reader["letra"] != DBNull.Value ? reader["letra"].ToString() : string.Empty,
+                            Imagem = reader["imagem"] != DBNull.Value ? (byte[])reader["imagem"] : null,
+                            Genero = new Genero { Id = Convert.ToInt32(reader["genero_id"]) }
+                        });
+                    }
                 }
             }
+            return lista;
         }
 
         public static void ApagarDisco(int id)
         {
-            var query = "DELETE FROM disco WHERE id=@id";
-
-            using (var conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(_connectionString))
             {
                 conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-
-        // -------------------------------------
-        // FAIXAS
-        // -------------------------------------
-
-        public static List<Faixa> ListarFaixas(int id_disco)
-        {
-            var faixas = new List<Faixa>();
-
-            var query = "SELECT id, id_disco, descricao, duracao FROM disco WHERE id=@id_disco";
-
-            using (var conn = new MySqlConnection(connectionString))
-            {
-                conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@id_disco", id_disco);
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Faixa faixa = new Faixa(
-                                reader.GetInt32("id"),
-                                reader.GetString("descricao"),
-                                reader.GetInt32("duracao")
-                            );
-
-                            faixas.Add(faixa);
-                        }
-                    }
-                }
-                
-            }
-
-            return faixas;
-        }
-
-        public static void InserirFaixa(int id_disco, string descricao, int duracao)
-        {
-            var query = "INSERT INTO disco (id_disco, descricao, duracao) VALUES (@id_disco,@descricao,@duracao)";
-
-            using (var conn = new MySqlConnection(connectionString))
-            {
-                conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@id_disco", id_disco);
-                    cmd.Parameters.AddWithValue("@descricao", descricao);
-                    cmd.Parameters.AddWithValue("@duracao", duracao);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        public static void ApagarFaixa(int id)
-        {
-            var query = "DELETE FROM faixa WHERE id=@id";
-
-            using (var conn = new MySqlConnection(connectionString))
-            {
-                conn.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                string sql = "DELETE FROM disco WHERE id = @id";
+                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
                     cmd.ExecuteNonQuery();

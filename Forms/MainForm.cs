@@ -100,7 +100,7 @@ namespace discos.Forms
                                                               MessageBoxIcon.Warning);
                         if (result == DialogResult.Yes)
                         {
-                            Database.ApagarArtista(artistaSelecionado.Id);
+                            //Database.ApagarArtista(artistaSelecionado.Id);
                             CarregarArtistas(); // Refresh the list after deletion
                         }
                         break;

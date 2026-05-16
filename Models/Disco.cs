@@ -7,15 +7,10 @@ namespace discos.Models
         public int Id { get; set; }
         public string Nome { get; set; }
         public int Ano { get; set; }
-        public int IdGenero { get; set; }
-        public List<Faixa> Faixa { get; set; }
+        public string Letra { get; set; } = string.Empty;
+        public Genero Genero { get; set; }
+        public byte[] Imagem { get; set; } = null;
 
-        public Disco(int id, string nome, int ano, int idGenero)
-        {
-            Id = id;
-            Nome = nome;
-            Ano = ano;
-            IdGenero = idGenero;
-        }
+        public List<Faixa> Faixas { get; set; } = new List<Faixa>();
     }
 }

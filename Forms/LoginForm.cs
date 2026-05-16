@@ -21,6 +21,11 @@ namespace discos2
 
         private void BtnLogin_Click(object sender, EventArgs e)
         {
+            this.Hide();
+            MainForm form = new MainForm();
+            form.Show();
+
+            /*
             string user = textLogin.Text.Trim();
             string pass = textPass.Text.Trim();
 
@@ -54,6 +59,7 @@ namespace discos2
                 MessageBox.Show(ex.Message, "Erro",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            */
         }
     }
 }
