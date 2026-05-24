@@ -1,4 +1,6 @@
-﻿using discos.Forms;
+﻿using discos.Data;
+using discos.Forms;
+using discos.Models;
 using System;
 using System.Windows.Forms;
 
@@ -18,11 +20,6 @@ namespace discos2
 
         private void BtnLogin_Click(object sender, EventArgs e)
         {
-            this.Hide();
-            MainForm form = new MainForm();
-            form.Show();
-
-            /*
             string user = textLogin.Text.Trim();
             string pass = textPass.Text.Trim();
 
@@ -35,28 +32,26 @@ namespace discos2
 
             try
             {
-                var logins = Database.ListarLogins();
 
-                foreach (var login in logins)
+                bool valido = Database.VerificarLogin(user, pass);
+
+                if (valido)
                 {
-                    if (login.Username == user && login.Password == pass)
-                    {
-                        this.Hide();
-                        MainForm form = new MainForm();
-                        form.Show();
-                    } else
-                    {
-                        MessageBox.Show("Utilizador ou senha incorretos!");
-                        textPass.Clear();
-                        textPass.Focus();
-                    }
+                    this.Hide();
+                    MainForm form = new MainForm();
+                    form.Show();
+                }
+                else
+                {
+                    MessageBox.Show("Utilizador ou senha incorretos!");
+                    textPass.Clear();
+                    textPass.Focus();
                 }
             } catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Erro",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            */
         }
     }
 }

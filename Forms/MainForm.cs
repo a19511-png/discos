@@ -2,103 +2,101 @@
 using discos.Models;
 using System;
 using System.ComponentModel;
+using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace discos.Forms
 {
-    // <summary>
-    // Form principal da aplicação, exibe a lista de artistas e permite navegar para os detalhes de cada artista
-    // </summary>
     public partial class MainForm : Form
     {
         // Lista de artistas para exibir na interface
         private readonly BindingList<Artista> artistas = new BindingList<Artista>();
+        private ImageList imageListLarge;
+        private ContextMenuStrip itemContextMenu;
 
         public MainForm()
         {
             InitializeComponent();
         }
 
-        // Quando o form é aberto vai carregar a lista de artistas
         private void MainForm_Load(object sender, EventArgs e)
         {
+            imageListLarge = new ImageList();
+            imageListLarge.ImageSize = new Size(256, 256);
+            imageListLarge.ColorDepth = ColorDepth.Depth32Bit;
+
             CarregarArtistas();
 
-            // 1. Bind your data source first (assuming employeeBindingList is a BindingList<Employee>)
-            dataGridView1.DataSource = artistas;
-            dataGridView1.CellContentClick += dataGridView1_CellContentClick;
+            listView1.LargeImageList = imageListLarge;
+            listView1.DoubleClick += ListView1_DoubleClick;
 
-            // 3. Create and add the Delete button column
-            DataGridViewButtonColumn viewColumn = new DataGridViewButtonColumn();
-            viewColumn.Name = "ViewColumn";
-            viewColumn.HeaderText = "";
-            viewColumn.Text = "Ver";
-            viewColumn.UseColumnTextForButtonValue = true;
-            dataGridView1.Columns.Add(viewColumn);
+            listView1.Columns.Add("Nome", 150);
+            listView1.Columns.Add("Id", 120);
 
-            // 2. Create and add the Edit button column
-            DataGridViewButtonColumn editColumn = new DataGridViewButtonColumn();
-            editColumn.Name = "EditColumn";
-            editColumn.HeaderText = "";
-            editColumn.Text = "Editar"; // The text that appears on the button
-            editColumn.UseColumnTextForButtonValue = true; // Forces all buttons to show the .Text value
-            dataGridView1.Columns.Add(editColumn);
+            itemContextMenu = new ContextMenuStrip();
+            ToolStripMenuItem editarArtistaItem = new ToolStripMenuItem("Editar", null, editarArtistaButton_Click);
+            ToolStripMenuItem removerArtistaItem = new ToolStripMenuItem("Remover", null, removerArtistaButton_Click);
 
-            // 3. Create and add the Delete button column
-            DataGridViewButtonColumn deleteColumn = new DataGridViewButtonColumn();
-            deleteColumn.Name = "DeleteColumn";
-            deleteColumn.HeaderText = "";
-            deleteColumn.Text = "Remover";
-            deleteColumn.UseColumnTextForButtonValue = true;
-            dataGridView1.Columns.Add(deleteColumn);
+            itemContextMenu.Items.Add(editarArtistaItem);
+            itemContextMenu.Items.Add(new ToolStripSeparator());
+            itemContextMenu.Items.Add(removerArtistaItem);
+
+            listView1.ContextMenuStrip = itemContextMenu;
+
+            AtualizarLista();
         }
 
-        // Metodo para carregar os artistas do banco de dados
         private void CarregarArtistas()
         {
             artistas.Clear();
-            var novoArtistas = Database.ListarArtistas();
+            var novoArtistas = Database.ObterListaDeArtistas();
+
             foreach (var artista in novoArtistas)
             {
                 artistas.Add(artista);
+                if (artista.Imagem != null)
+                {
+                    imageListLarge.Images.Add(artista.Id.ToString(), artista.Imagem);
+                }
             }
-            dataGridView1.Refresh();
         }
 
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void AtualizarLista()
         {
-            // 1. Make sure the user didn't click the column header (RowIndex will be -1)
-            if (e.RowIndex >= 0)
+            listView1.BeginUpdate();
+            foreach (var artista in artistas)
             {
-                // 2. Get the column name that was clicked
-                string columnName = dataGridView1.Columns[e.ColumnIndex].Name;
+                ListViewItem item1 = new ListViewItem(artista.Nome.ToString());
+                item1.ImageKey = artista.Id.ToString();
+                item1.SubItems.Add(artista.Id.ToString());
+                listView1.Items.Add(item1);
+            }
+            listView1.EndUpdate();
+        }
 
-                // 3. Get the bound object for the row that was clicked
-                DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
-                Artista artistaSelecionado = (Artista)row.DataBoundItem;
+        private void AbrirGerirArtistaForm(Artista artista = null)
+        {
+            using (GerirArtistaForm novoArtistaForm = new GerirArtistaForm(artista))
+            {
+                DialogResult result = novoArtistaForm.ShowDialog();
 
-                switch (columnName)
+                if (result == DialogResult.OK)
                 {
-                    case "ViewColumn":
-                        VerArtistaForm artistaForm = new VerArtistaForm(artistaSelecionado);
-                        artistaForm.Show();
-                        break;
-                    case "EditColumn":
-                        AbrirGerirArtistaForm(artistaSelecionado);
-                        break;
-                    case "DeleteColumn":
-                        // Handle Delete button click
-                        DialogResult result = MessageBox.Show($"Tens a certeza que queres apagar {artistaSelecionado.Nome}?",
-                                                              "Apagar Artista",
-                                                              MessageBoxButtons.YesNo,
-                                                              MessageBoxIcon.Warning);
-                        if (result == DialogResult.Yes)
-                        {
-                            //Database.ApagarArtista(artistaSelecionado.Id);
-                            CarregarArtistas(); // Refresh the list after deletion
-                        }
-                        break;
+                    CarregarArtistas();
+                    listView1.Items.Clear();
+                    imageListLarge.Images.Clear();
+                    CarregarArtistas();
+                    AtualizarLista();
                 }
+            }
+        }
+
+        private void AbrirVerArtistaForm(Artista artista)
+        {
+            using (VerArtistaForm verArtistaForm = new VerArtistaForm(artista))
+            {
+                DialogResult result = verArtistaForm.ShowDialog();
             }
         }
 
@@ -107,16 +105,46 @@ namespace discos.Forms
             AbrirGerirArtistaForm();
         }
 
-        private void AbrirGerirArtistaForm(Artista artista = null)
+        private void editarArtistaButton_Click(object sender, EventArgs e)
         {
-            using (GerirArtistaForm novoArtistaForm = new GerirArtistaForm(artista))
+            if (listView1.SelectedItems.Count > 0)
             {
-                // 2. Open as a Dialog. THE CODE STOPS HERE UNTIL THE FORM CLOSES.
-                DialogResult result = novoArtistaForm.ShowDialog();
+                ListViewItem activeItem = listView1.SelectedItems[0];
+                Artista artista = artistas.Where(a => a.Id.ToString() == activeItem.SubItems[1].Text).FirstOrDefault();
+                AbrirGerirArtistaForm(artista);
+            }
+        }
 
-                if (result == DialogResult.OK)
+        private void ListView1_DoubleClick(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                ListViewItem activeItem = listView1.SelectedItems[0];
+                Artista artista = artistas.Where(a => a.Id.ToString() == activeItem.SubItems[1].Text).FirstOrDefault();
+                AbrirVerArtistaForm(artista);
+            }
+        }
+
+        private void removerArtistaButton_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                ListViewItem activeItem = listView1.SelectedItems[0];
+                Artista artista = artistas.Where(a => a.Id.ToString() == activeItem.SubItems[1].Text).FirstOrDefault();
+
+                DialogResult result = MessageBox.Show(
+                    "Tem a certeza que queres apagar " + artista.Nome + "?",
+                    "Apagar Artista",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Yes)
                 {
-                    CarregarArtistas(); // Refresh the list after saving
+                    Database.ApagarArtista(artista.Id);
+                    listView1.Items.Clear();
+                    imageListLarge.Images.Clear();
+                    CarregarArtistas();
+                    AtualizarLista();
                 }
             }
         }

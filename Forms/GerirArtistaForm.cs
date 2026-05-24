@@ -7,14 +7,11 @@ using System.Windows.Forms;
 
 namespace discos.Forms
 {
-    // <summary>
-    // Form para gerir artistas, pode ser usado para criar ou editar um artista dependo se um artista é passado ou não no construtor
-    // </summary>
     public partial class GerirArtistaForm : Form
     {
-        private bool editar = false; // Indica se o form está em modo de edição (true) ou criação (false)
-        private List<Nacionalidade> nacionalidades = new List<Nacionalidade>(); // Lista de nacionalidades para preencher o combo box
-        private Artista _artista; // Artista a ser editado, se estiver em modo de edição
+        private bool editar = false;
+        private List<Nacionalidade> nacionalidades = new List<Nacionalidade>();
+        private Artista _artista;
 
         public GerirArtistaForm(Artista artista = null)
         {
@@ -23,64 +20,87 @@ namespace discos.Forms
             _artista = artista;
 
             nacionalidades.Clear();
-            nacionalidades = Database.ListarNacionalidades(); // Carrega as nacionalidades do banco de dados
+            nacionalidades = Database.ObterNacionalidades();
 
             foreach (var nacionalidade in nacionalidades)
             {
-                nacionalidadeComboBox.Items.Add(nacionalidade.Nome); // Preenche o combo box com os nomes das nacionalidades
+                nacionalidadeComboBox.Items.Add(nacionalidade.Nome);
             }
 
 
             if (artista != null)
             {
-
                 editar = true;
-                label1.Text = "Editar Artista";
+                tituloLabel.Text = "Editar Artista";
                 nomeTextBox.Text = _artista.Nome;
-                dataNascimentoDateTimePicker.Value = _artista.DataNascimento ?? DateTime.Now; // Define a data de nascimento, se for nula usa a data atual
-                richTextBox1.Text = _artista.Biografia;
-                nacionalidadeComboBox.SelectedItem = _artista.Nacionalidade?.Nome; // Seleciona a nacionalidade no combo box, se existir
+                dataNascimentoDateTimePicker.Value = _artista.DataNascimento ?? DateTime.Now;
+                biografiaRichTextBox.Text = _artista.Biografia;
+                nacionalidadeComboBox.SelectedItem = nacionalidades.FirstOrDefault(n => n.Id == _artista.Nacionalidade.Id).Nome;
+                fotoPictureBox.Image = _artista.Imagem;
             }
             else
             {
                 editar = false;
-                label1.Text = "Criar Artista";
+                tituloLabel.Text = "Criar Artista";
             }
         }
 
-        private void guardarButton_Click(object sender, EventArgs e)
+        private void GuardarButton_Click(object sender, EventArgs e)
         {
             if (editar)
             {
                 _artista.Nome = nomeTextBox.Text;
                 _artista.DataNascimento = dataNascimentoDateTimePicker.Value;
                 _artista.Nacionalidade = nacionalidades.FirstOrDefault(n => n.Nome == nacionalidadeComboBox.SelectedItem.ToString());
-                _artista.Biografia = richTextBox1.Text;
-                Database.AtualizarArtista(_artista); // Atualiza o artista no banco de dados
-
-
+                _artista.Biografia = biografiaRichTextBox.Text;
+                _artista.Imagem = fotoPictureBox.Image;
+                Database.AtualizarArtista(_artista);
             }
             else
             {
                 Database.InserirArtista
                 (
-                new Artista
-                {
-                    Nome = nomeTextBox.Text,
-                    DataNascimento = dataNascimentoDateTimePicker.Value,
-                    Nacionalidade = nacionalidades.FirstOrDefault(n => n.Nome == nacionalidadeComboBox.SelectedItem.ToString()),
-                    Biografia = richTextBox1.Text
-                }
-
+                    new Artista
+                    {
+                        Nome = nomeTextBox.Text,
+                        DataNascimento = dataNascimentoDateTimePicker.Value,
+                        Nacionalidade = nacionalidades.FirstOrDefault(n => n.Nome == nacionalidadeComboBox.SelectedItem.ToString()),
+                        Biografia = biografiaRichTextBox.Text,
+                        Imagem = fotoPictureBox.Image
+                    }
                 );
             }
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
 
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
+        private void InsertPhotoButton_Click(object sender, EventArgs e)
         {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+                openFileDialog.Filter = "Image Files (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+                openFileDialog.FilterIndex = 1;
+                openFileDialog.RestoreDirectory = true;
 
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string selectedFilePath = openFileDialog.FileName;
+
+                    fotoPictureBox.ImageLocation = selectedFilePath;
+                }
+            }
+        }
+
+        private void CancelarButton_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        private void ApagarFotoArtistaButton_Click(object sender, EventArgs e)
+        {
+            fotoPictureBox.Image = null;
         }
     }
 }
